@@ -1,0 +1,389 @@
+function main()
+   % First Code (Cell Manager and System Information)
+   % Cell Manager
+   number_of_cells = randi([3, 10]);
+   cell_name = randi([17426, 37289]);
+   signal_strength = randi([-55, -30]);
+   disp(['There are ' num2str(number_of_cells) ' cells available']);
+   disp(['Cell ID: ' num2str(cell_name) ' has the highest signal strength
+of ' num2str(signal_strength)]);
+   disp(['Camped on Cell ID: ' num2str(cell_name)]);
+   % System Information
+   PLMN_Information = randi([1635, 5937]);
+   Tracking_Area_Code = randi([130, 976]);
+   Physical_Cell_Id = randi([16357, 45937]);
+   Access_Identitiy = randi([0, 14]);
+   disp('Received Master Information Block (MIB)');
+   disp('Data received with SIB1:');
+   disp(['PLMN_Information = ' num2str(PLMN_Information)]);
+   disp(['Tracking_Area_Code = ' num2str(Tracking_Area_Code)]);
+   disp(['Physical_Cell_Id = ' num2str(Physical_Cell_Id)]);
+   prioritize_services(Access_Identitiy);
+   % Access Procedure
+   C_RNTI = randi([1526, 6954]);
+   disp('UE: Sending Random access preamble');
+   if check_preamble()
+       disp(['gNB: Assigning C-RNTI=' num2str(C_RNTI) ' and UL-GRANT']);
+       disp(['UE: Received C-RNTI=' num2str(C_RNTI) ' and UL-GRANT from
+gNB']);
+       disp('UE: Sending RRC Connection Request');
+       disp('gNB: Processing RRC Connection Request from UE');
+       if rand() < 0.1
+           disp('gNB: Resource allocation failed for UE due to more number
+of users');
+           disp('Connection establishment failed');
+           disp('Initial Access Procedure Failed');
+           return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+           disp('gNB: Connection established with UE');
+           disp('Initial Access Procedure is Successful');
+       end
+15
+  else
+       disp('Initial Access Procedure Failed');
+       return;  % Exit the function if setup fails and rest of the code
+will not be executed
+end
+   % Second Code (RRCSetupProcess)
+   rng('shuffle');
+   % NetworkNode functions
+   network_congestion = @() rand() < 0.05;
+   configuration_mismatch = @() rand() < 0.05;
+   system_failure = @() rand() < 0.05;
+   % RRCSetupProcess functions
+   function setup_success = rrc_setup_request(ue_id, network_node)
+       fprintf('UE %d: Sending RRCSetupRequest to gNB-DU.\n', ue_id);
+       if network_node.network_congestion()
+           fprintf('gNB-DU: Network congestion, unable to process RRC setup
+request for UE %d\n', ue_id);
+           fprintf('RRC Setup process failed\n');
+           setup_success = false;
+           return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+           fprintf('gNB-DU: Received RRCSetupRequest from UE %d\n', ue_id);
+           setup_success = rrc_setup(ue_id, network_node);
+end end
+   function rrc_setup_success = rrc_setup(ue_id, network_node)
+       fprintf('gNB-DU: Sending RRCSetup to UE %d\n', ue_id);
+       fprintf('UE %d: Received RRCSetup message with configuration\n',
+ue_id);
+       fprintf('gNB-DU: Received RRC CONNECTION SETUP REQUEST from UE
+%d\n', ue_id);
+       fprintf('gNB-DU: Processing RRC CONNECTION SETUP REQUEST from UE
+%d\n', ue_id);
+       fprintf('gNB-DU: Sending RRC CONNECTION SETUP COMPLETE to UE %d\n',
+ue_id);
+       rrc_setup_success = initial_ue_message(ue_id, network_node);
+end
+   function initial_ue_message_success = initial_ue_message(ue_id,
+network_node)
+       fprintf('UE %d: Received RRC CONNECTION SETUP COMPLETE from
+gNB-DU\n', ue_id);
+16
+
+         fprintf('gNB-CU: Received RRC setup complete from UE %d\n', ue_id);
+       fprintf('AMF: Received INITIAL UE MESSAGE for UE %d\n', ue_id);
+       if network_node.configuration_mismatch()
+           fprintf('gNB-CU: Configuration mismatch for UE %d\n', ue_id);
+           fprintf('RRC Setup process failed\n');
+           initial_ue_message_success = false;
+           return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+           initial_ue_message_success = context_setup_request(ue_id,
+network_node);
+end end
+   function context_setup_request_success = context_setup_request(ue_id,
+network_node)
+       fprintf('gNB-CU: Sending UE CONTEXT SETUP REQUEST for UE %d\n',
+ue_id);
+       fprintf('gNB-CU: Sending SecurityModeCommand to UE %d\n', ue_id);
+       fprintf('gNB-DU: Sending SecurityModeCommand to UE\n');
+       fprintf('UE %d: Sending SecurityModeComplete to gNB-DU.\n', ue_id);
+       fprintf('gNB-DU: Received SecurityModeComplete from UE\n');
+       fprintf('gNB-CU: Initiating RRCReconfiguration for UE %d\n', ue_id);
+       fprintf('gNB-DU: Sending RRCReconfiguration to UE %d\n', ue_id);
+       fprintf('UE %d: Sending RRCReconfigurationComplete to gNB-DU.\n',
+ue_id);
+       fprintf('gNB-CU: UE %d setup complete.\n', ue_id);
+       context_setup_request_success =
+initial_context_setup_response(ue_id, network_node);
+end
+   function initial_context_setup_response_success =
+initial_context_setup_response(ue_id, network_node)
+       if network_node.system_failure()
+           fprintf('AMF: System failure, cannot send INITIAL CONTEXT SETUP
+RESPONSE for UE %d\n', ue_id);
+           initial_context_setup_response_success = false;
+           return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+           fprintf('AMF: Sending INITIAL CONTEXT SETUP RESPONSE for UE
+%d\n', ue_id);
+           initial_context_setup_response_success = true;
+end end
+17
+
+     % Example usage
+   network_node = struct('network_congestion', network_congestion, ...
+                         'configuration_mismatch', configuration_mismatch,
+...
+                         'system_failure', system_failure);
+   ue_id = randi([2784, 5938]);
+   setup_success = rrc_setup_request(ue_id, network_node);
+   if setup_success
+       fprintf('RRC Setup process successful for UE %d\n', ue_id);
+   else
+       fprintf('RRC Setup process failed for UE %d\n', ue_id);
+       return;  % Exit the function if setup fails and rest of the code
+will not be executed
+end
+   % Third Code (UE Registration)
+   rng('shuffle');
+   % NetworkEntity functions
+   integrity_check = @() rand() >= 0.05;
+   authentication = @() rand() >= 0.05;
+   identity_check = @() rand() >= 0.05;
+   pei_check = @() rand() >= 0.05;
+   % UERegistration functions
+   function registration_success = registration_request(ue_id,
+network_entity)
+       fprintf('UE %d: Sending registration request to the NG-RAN\n',
+ue_id);
+       fprintf('NG-RAN: Received REGISTRATION REQUEST for UE %d\n', ue_id);
+       if ~network_entity.integrity_check()
+           fprintf('NG-RAN: Integrity check failed for UE %d\n', ue_id);
+           fprintf('Registration process is failed\n');
+           registration_success = false;
+           return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+           fprintf('NG-RAN: Integrity check is successful, forwarding to
+the AMF\n');
+           registration_success = amf_registration(ue_id, network_entity);
+end end
+   function amf_registration_success = amf_registration(ue_id,
+network_entity)
+18
+
+        fprintf('AMF: Authenticating UE %d with AUSF.\n', ue_id);
+       if ~network_entity.authentication()
+           fprintf('AMF: UE %d authentication is unsuccessful.\n', ue_id);
+           fprintf('Registration process is failed\n');
+           amf_registration_success = false;
+           return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+           fprintf('AMF: UE %d authentication successful.\n', ue_id);
+           amf_registration_success = security_mode_command(ue_id,
+network_entity);
+end end
+   function security_mode_command_success = security_mode_command(ue_id,
+network_entity)
+       fprintf('AMF: Sending SECURITY MODE COMMAND to UE %d\n', ue_id);
+       fprintf('UE %d: sending SECURITY MODE COMMAND complete to AMF\n',
+ue_id);
+       if ~network_entity.identity_check()
+           fprintf('AMF : IDENTITY REQUEST message to the UE %d\n', ue_id);
+           fprintf('UE %d: Response to IDENTITY REQUEST sending permanent
+equipment identifier (PEI)\n', ue_id);
+           security_mode_command_success = false;
+else
+           security_mode_command_success = pei_registration(ue_id,
+network_entity);
+end end
+   function pei_registration_success = pei_registration(ue_id,
+network_entity)
+       fprintf('AMF : Initiating PEI check for UE %d from 5G-EIR \n',
+ue_id);
+       fprintf('5G EIR: Checking PEI identity for UE %d\n', ue_id);
+       if ~network_entity.pei_check()
+           fprintf('5G-EIR: PEI check failed.\n');
+           fprintf('Registration process is failed\n');
+           pei_registration_success = false;
+           return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+19
+
+             fprintf('5G-EIR: PEI check successful\n');
+           pei_registration_success = udm_registration(ue_id);
+end end
+   function udm_registration_success = udm_registration(ue_id)
+       fprintf('AMF: Requesting Nudm_UECM_Registration and Nudm_SDM_Get
+Request messageto UDM for UE %d\n', ue_id);
+       fprintf('UDM: Nudm_UECM_Registration Response and Nudm_SDM_Get
+Response message to AMF for UE %d\n', ue_id);
+       fprintf('AMF: REGISTRATION ACCEPT message to the UE %d\n', ue_id);
+       fprintf('UE %d: REGISTRATION COMPLETE message to the AMF\n', ue_id);
+       udm_registration_success = true;
+end
+   % Example usage
+   network_entity = struct('integrity_check', integrity_check, ...
+                           'authentication', authentication, ...
+                           'identity_check', identity_check, ...
+                           'pei_check', pei_check);
+   ue_id = randi([2784, 5938]);
+   registration_success = registration_request(ue_id, network_entity);
+   if registration_success
+       fprintf('Registration process successful for UE %d\n', ue_id);
+   else
+       fprintf('Registration process failed for UE %d\n', ue_id);
+       return;  % Exit the function if setup fails and rest of the code
+will not be executed
+end
+   % Fourth Code (PDU Session Management)
+   session_manager();
+   policy_manager(ue_id);
+   communication(randi([48276, 71394]));
+end
+function prioritize_services(Access_Identitiy)
+   switch Access_Identitiy
+       case 11
+           disp('Prioritizing security services');
+       case 9
+           disp('Prioritizing Emergency services');
+       case 10
+           disp('Configuring to public utilities');
+       otherwise
+end
+disp('Using standard network settings');
+20
+
+  end
+function result = check_preamble()
+   if rand() < 0.1
+       disp('Preamble lost due to poor signal conditions');
+       disp('Connection establishment failed');
+       disp('Initial Access Procedure Failed');
+       result = false;
+       return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+       disp('gNB: Received Preamble from UE');
+       result = true;
+end end
+function session_manager()
+   global ip_address;
+   session_states = {'NEW', 'EXISTING'};
+   pdu_session_id = randi([48276, 71394]);
+   ue_id = randi([2784, 5938]);
+   ssc_modes = [1, 2, 3];
+   ip_address = {'IPv4', 'IPv6', 'IPv4v6'};
+   session_state = session_states{randi([1, numel(session_states)])};
+   initiate_session(session_state, pdu_session_id, ue_id, ssc_modes);
+end
+function initiate_session(session_state, pdu_session_id, ue_id, ssc_modes)
+   disp('UE : Initiates PDU Session Establishment for AMF');
+   fprintf('AMF: Received PDU Session Establishment request for UE, PDU
+Session ID %d.\n and checking for the type of session', pdu_session_id);
+   if strcmp(session_state, 'NEW')
+       handle_new_session(pdu_session_id, ue_id, ssc_modes);
+   elseif strcmp(session_state, 'EXISTING')
+       handle_existing_session(ue_id, pdu_session_id);
+end end
+function handle_new_session(pdu_session_id, ue_id, ssc_modes)
+   global ip_address;
+   disp(['AMF: Handling new session for UE ID ', num2str(ue_id), ', PDU
+Session ID ', num2str(pdu_session_id), 'and performing Secondary
+authorization/authentication.']);
+   if rand() < 0.05
+       disp('Authorization/Authentication failed');
+21
+
+         disp('PDU establishment failed');
+       return;  % Exit the function if setup fails and rest of the code
+will not be executed
+else
+       disp('Authorization/Authentication successful');
+       create_sm_context(pdu_session_id, ue_id, ssc_modes);
+end end
+function create_sm_context(pdu_session_id, ue_id, ssc_modes)
+   global ip_address;
+   disp('AMF: Sending an Nsmf_PDUSession_CreateSMContextRequest to the
+SMF');
+   if check_subscription_and_policy(ue_id)
+       disp(['UPF: Establishing UPF session for PDU Session ID ',
+num2str(pdu_session_id), '.']);
+       disp(['SMF: PDU Session established successfully for UE ID ',
+num2str(ue_id), ' with Session ID ', num2str(pdu_session_id), '.']);
+       disp('SMF: Sending an Nsmf_PDUSession_CreateSMContextRequestResponse
+to the AMF');
+   else
+       disp('PDU establishment failed');
+       return; % Exit the function if setup fails and rest of the code will
+not be executed
+end end
+function handle_existing_session(ue_id, pdu_session_id)
+   disp(['AMF: Handling existing session for UE ID ', num2str(ue_id), ',
+PDU Session ID ', num2str(pdu_session_id), '.']);
+   disp('SMF: Secondary authorization not required for existing session.');
+end
+function flag = check_subscription_and_policy(ue_id)
+   disp(['SMF: Requesting subscription data and policy data for UE ID ',
+num2str(ue_id), ' from UDM']);
+   subscription_data = logical(randi([0, 1]));
+   policy_data = logical(randi([0, 1]));
+   flag = subscription_data && policy_data;
+end
+function policy_manager(ue_id)
+   global ip_address;
+   selected_ssc_mode = randi([1, 3]);
+   selected_ip_address = randi([1, numel(ip_address)]);
+22
+
+     disp('SMF: PCF selected for managing the PDU session.');
+   disp('PCF: Providing default PCC rules.');
+   disp('SMF: Policy association established with rules');
+   disp(['SMF: Selected SSC mode ', num2str(selected_ssc_mode)]);
+   disp(['SMF: Selected IP address for ',
+ip_address{selected_ip_address}]);
+   disp(['SMF: Initiating SM Policy Association Modification for UE ID ',
+num2str(ue_id)]);
+   disp(['PCF: Modifying policy rules for UE ID ', num2str(ue_id)]);
+   disp('PCF: Policy rules updated');
+   disp(['SMF: Updated session policy for UE ID ', num2str(ue_id)]);
+end
+function communication(pdu_session_id)
+   global ip_address;
+   N1N2_info = struct('PDU_Session_ID', pdu_session_id, 'IP_Address',
+ip_address{randi([1, numel(ip_address)])}, 'QoS_Profile', 'Qos_profile',
+'CN_Tunnel_Info', 'CN_Tunnel_Info', 'User_Plane_Security_Info',
+'User_Plane_Security_Info', 'UE_Integrity_Protection_Max_Data_Rate', '10
+Gbps');
+   field_names = fieldnames(N1N2_info);
+   field_values = struct2cell(N1N2_info);
+   info_string = '';
+   for i = 1:numel(field_names)
+       info_string = [info_string, field_names{i}, ': ',
+num2str(field_values{i}), ', '];
+end
+   disp('SMF: Namf_Communication_N1N2MessageTransfer to the AMF');
+   disp(['AMF: Handling N1N2 Message Transfer with information: ',
+info_string]);
+   disp(['AMF: Sending NAS message with PDU Session ID ',
+num2str(pdu_session_id), ' to RAN.']);
+   disp(['RAN: Received NAS message from AMF with PDU Session ID ',
+num2str(pdu_session_id), ', allocating N3 Tunnel Info.']);
+   disp('RAN: Sending N2 PDU Session Response to AMF with N3 tunnel info');
+   disp('SMF: Updating SM context with received N2 SM info');
+   disp('UPF: Handling N4 Session Modification request with info');
+   disp('UPF: Session modification completed, sending response to SMF.');
+   disp('UPF: Delivering buffered down-link packets to UE.');
+   disp(['SMF: Sending Update SM Context Response to AMF for PDU Session ID
+', num2str(pdu_session_id)]);
+   disp(['SMF: Subscribing to mobility events for PDU Session ID ',
+num2str(pdu_session_id)]);
+23
+
+disp(['AMF: Registered for mobility events for PDU Session ID ',
+num2str(pdu_session_id)]);
+   disp(['SMF: Notifying AMF of SM Context Release for PDU Session ID ',
+num2str(pdu_session_id)]);
+   disp(['AMF: Handling SM Context Release for PDU Session ID ',
+num2str(pdu_session_id)]);
+   disp('PDU establishment successful');
+end
+main();
